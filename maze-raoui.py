@@ -178,6 +178,7 @@ class MazeGame:
         self.game_won = False
         self.moves = 0
         self.start_time = pygame.time.get_ticks()
+        self.end_time = None 
 
         self.particle_system = ParticleSystem()
         self.glow_time = 0
@@ -211,12 +212,14 @@ class MazeGame:
                 if event.key == pygame.K_r:
                     self.reset_game()
                 elif not self.game_won:
-                    self.handle_movement(event.key)
+                    if event.key in [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT,
+                                   pygame.K_w, pygame.K_s, pygame.K_a, pygame.K_d]:
+                        self.handle_movement(event.key)
         return True
     
     def handle_movement(self, key):
         new_x, new_y = self.player_x, self.player_y
-        
+
         if key == pygame.K_UP or key == pygame.K_w:
             new_y -= 1
         elif key == pygame.K_DOWN or key == pygame.K_s:
@@ -225,7 +228,9 @@ class MazeGame:
             new_x -= 1
         elif key == pygame.K_RIGHT or key == pygame.K_d:
             new_x += 1
-        
+        else:
+            return  
+
         if (0 <= new_x < MAZE_WIDTH and 0 <= new_y < MAZE_HEIGHT and
             self.maze[new_y][new_x] == 0):
             
@@ -237,10 +242,11 @@ class MazeGame:
             self.player_y = new_y
             self.player_target_x = float(new_x)
             self.player_target_y = float(new_y)
-            self.moves += 1
-            
+            self.moves += 1  
+
             if self.player_x == self.goal_x and self.player_y == self.goal_y:
                 self.game_won = True
+                self.end_time = pygame.time.get_ticks()  
                 self.win_animation_time = pygame.time.get_ticks()
                 center_x = self.goal_x * CELL_SIZE + CELL_SIZE // 2
                 center_y = self.goal_y * CELL_SIZE + CELL_SIZE // 2
@@ -275,6 +281,7 @@ class MazeGame:
         self.game_won = False
         self.moves = 0
         self.start_time = pygame.time.get_ticks()
+        self.end_time = None  
         self.particle_system = ParticleSystem()
         
         self.particle_system.add_explosion(SCREEN_WIDTH//2, SCREEN_HEIGHT//2, COLORS['accent'], 15)
@@ -327,9 +334,14 @@ class MazeGame:
         self.screen.blit(title_text, title_rect)
         y_offset += 60
         
+        if self.game_won and self.end_time:
+            elapsed_time = (self.end_time - self.start_time) // 1000
+        else:
+            elapsed_time = (pygame.time.get_ticks() - self.start_time) // 1000
+        
         stats = [
             ("Moves", str(self.moves)),
-            ("Time", f"{(pygame.time.get_ticks() - self.start_time) // 1000}s"),
+            ("Time", f"{elapsed_time}s"),
         ]
         
         for label, value in stats:
